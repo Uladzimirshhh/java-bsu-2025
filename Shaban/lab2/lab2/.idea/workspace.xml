@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="0c93ddcf-75df-4993-a141-34379964c5a7" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/../../../LabsData/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/../../../LabsData/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../Onischuk/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../Onischuk/lab-1-task/README.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../Onischuk/lab-1-task/pom.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../Onischuk/lab-1-task/src/main/java/com/bsu/production/Main.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../Onischuk/lab-1-task/src/main/java/com/bsu/production/analyzer/ProdAnalyzer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../Onischuk/lab-1-task/src/main/java/com/bsu/production/line/ChemicalLine.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../Onischuk/lab-1-task/src/main/java/com/bsu/production/line/ElectronicsLine.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../Onischuk/lab-1-task/src/main/java/com/bsu/production/line/MechanicalLine.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../Onischuk/lab-1-task/src/main/java/com/bsu/production/line/ProductionLine.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../Onischuk/lab-1-task/src/main/java/com/bsu/production/model/ChemicalProduct.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../Onischuk/lab-1-task/src/main/java/com/bsu/production/model/ElectronicProduct.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../Onischuk/lab-1-task/src/main/java/com/bsu/production/model/MechanicalProduct.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../Onischuk/lab-1-task/src/main/java/com/bsu/production/model/Product.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../Onischuk/lab-1-task/src/main/java/com/bsu/production/validation/Validatable.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../README.md" beforeDir="false" afterPath="$PROJECT_DIR$/../../../README.md" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../../.." />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 7
+}]]></component>
+  <component name="ProjectId" id="35tHOsU4aTrXK1QQfGpKNKE8w3H" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Application.Main.executor": "Debug",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "main",
+    "kotlin-language-version-configured": "true",
+    "onboarding.tips.debug.path": "/home/uladzimir/Yandex/java/java-bsu-2025/Shaban/lab2/lab2/src/Main.java"
+  }
+}]]></component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="0c93ddcf-75df-4993-a141-34379964c5a7" name="Changes" comment="" />
+      <created>1763922420258</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1763922420258</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>
