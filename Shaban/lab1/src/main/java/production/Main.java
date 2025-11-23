@@ -10,7 +10,7 @@ public class Main {
     public static void main(String[] args) {
         var eLine = new ElectronicsLine("EL-1", 0.95);
         eLine.addProduct(new ElectronicProduct("E1", "Smartphone", 120));
-        eLine.addProduct(new ElectronicProduct("E2", "Laptop", 240));
+        eLine.addProяduct(new ElectronicProduct("E2", "Laptop", 240));
 
         var mLine = new MechanicalLine("ML-1", 0.82);
         mLine.addProduct(new MechanicalProduct("M1", "Engine", 360));
