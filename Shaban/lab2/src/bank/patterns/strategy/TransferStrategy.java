@@ -3,17 +3,13 @@ package bank.patterns.strategy;
 import bank.core.models.Account;
 import bank.core.models.Transaction;
 import bank.repository.AccountRepository;
-import bank.repository.MockAccountRepository;
 
 import java.math.BigDecimal;
-import java.util.Comparator;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.locks.Lock;
 
 public class TransferStrategy implements TransactionStrategy {
-
-    private static final String TARGET_ACCOUNT_KEY = "TargetAccount";
 
     @Override
     public boolean executeTransaction(Account sourceAccount, Transaction transactionData, AccountRepository repository) {
@@ -26,15 +22,30 @@ public class TransferStrategy implements TransactionStrategy {
             return false;
         }
 
-        Account targetAccount = null;
-        if (repository instanceof MockAccountRepository) {
-            targetAccount = ((MockAccountRepository) repository).getTransferPartnerAccount(sourceAccount.getAccountIdentifier());
+        Optional<Account> targetAccountOptional = Optional.empty();
+
+        try {
+            targetAccountOptional = repository.findAccountByIdentifier(UUID.fromString(transactionData.getStatusMessage()));
+        } catch (IllegalArgumentException idException) {
         }
 
-        if (targetAccount == null || targetAccount.getIsFrozen()) {
-            transactionData.setStatusMessage("FAILED: Target account is frozen or not found.");
+        Account targetAccount = targetAccountOptional.orElse(null);
+
+        if (targetAccount == null) {
+            transactionData.setStatusMessage("FAILED: Target account not found.");
             return false;
         }
+
+        if (targetAccount.getIsFrozen()) {
+            transactionData.setStatusMessage("FAILED: Target account is frozen.");
+            return false;
+        }
+
+        if (sourceAccount.getAccountIdentifier().equals(targetAccount.getAccountIdentifier())) {
+            transactionData.setStatusMessage("FAILED: Source and target accounts must be different.");
+            return false;
+        }
+
 
         Lock firstLock, secondLock;
         if (sourceAccount.getAccountIdentifier().compareTo(targetAccount.getAccountIdentifier()) < 0) {
@@ -49,19 +60,19 @@ public class TransferStrategy implements TransactionStrategy {
         secondLock.lock();
 
         try {
-            BigDecimal withdrawalResult = sourceAccount.getCurrentBalance().subtract(transactionData.getTransactionAmount());
+            BigDecimal transferAmount = transactionData.getTransactionAmount();
+            BigDecimal withdrawalResult = sourceAccount.getCurrentBalance().subtract(transferAmount);
             if (withdrawalResult.signum() < 0) {
-                transactionData.setStatusMessage("FAILED: Source account has insufficient funds.");
+                transactionData.setStatusMessage("FAILED: Source account has insufficient funds. Balance: " + sourceAccount.getCurrentBalance().toPlainString());
                 return false;
             }
 
             sourceAccount.setCurrentBalance(withdrawalResult);
-            targetAccount.setCurrentBalance(targetAccount.getCurrentBalance().add(transactionData.getTransactionAmount()));
+            targetAccount.setCurrentBalance(targetAccount.getCurrentBalance().add(transferAmount));
 
             repository.saveAccount(targetAccount);
 
-            transactionData.setStatusMessage("SUCCESS: Funds transfered from " + sourceAccount.getAccountIdentifier().toString().substring(0, 4) +
-                    " to " + targetAccount.getAccountIdentifier().toString().substring(0, 4) +
+            transactionData.setStatusMessage("SUCCESS: Funds transfered to " + targetAccount.getAccountIdentifier().toString().substring(0, 4) +
                     ". Source New Balance: " + sourceAccount.getCurrentBalance().toPlainString());
             return true;
         } finally {

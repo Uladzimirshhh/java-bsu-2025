@@ -30,11 +30,7 @@ public class MockAccountRepository implements AccountRepository {
         storageMap.put(accountToSave.getAccountIdentifier(), accountToSave);
     }
 
-    public Account getTransferPartnerAccount(UUID callerId) {
-        Optional<Map.Entry<UUID, Account>> otherAccount = storageMap.entrySet().stream()
-                .filter(entry -> !entry.getKey().equals(callerId))
-                .findFirst();
-
-        return otherAccount.map(Map.Entry::getValue).orElse(null);
+    public Optional<Account> findTransferPartnerById(UUID targetIdentifier) {
+        return Optional.ofNullable(storageMap.get(targetIdentifier));
     }
 }

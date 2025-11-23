@@ -55,16 +55,8 @@ public class TransactionProcessor {
         Account targetAccount = targetAccountOptional.get();
 
         try {
-            if (newTransaction.getActionType() == bank.patterns.strategy.TransactionActionType.TRANSFER) {
-                Account secondAccount = accountDataAccess.getTransferPartnerAccount(newTransaction.getAccountIdentifier());
-                if (secondAccount != null) {
-                    newTransaction.setStatusMessage("TRANSFER: Ready to move from " + targetAccount.getAccountIdentifier().toString().substring(0, 4) +
-                            " to " + secondAccount.getAccountIdentifier().toString().substring(0, 4) +
-                            ". Amount: " + newTransaction.getTransactionAmount().toPlainString());
-                } else {
-                    newTransaction.setStatusMessage("TRANSFER FAILED: Partner account not available.");
-                }
-            }
+            // Вся логика, связанная со старым методом getTransferPartnerAccount, удалена.
+            // UUID получателя теперь передается через StatusMessage в классе Transaction
 
             TransactionStrategy strategy = strategyFactory.createStrategy(newTransaction.getActionType());
 

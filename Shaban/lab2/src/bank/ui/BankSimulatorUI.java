@@ -12,17 +12,22 @@ import bank.service.TransactionProcessor;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 public class BankSimulatorUI extends JFrame implements TransactionStatusListener {
 
-    private final Account userAccount;
+    private final List<Account> userAccounts;
     private final TransactionProcessor processor;
     private final MockAccountRepository repository;
     private final List<Transaction> completedTransactions;
@@ -32,12 +37,14 @@ public class BankSimulatorUI extends JFrame implements TransactionStatusListener
     private JTextArea historyTextArea;
     private JTextField amountInputField;
     private JComboBox<TransactionActionType> actionComboBox;
+    private JComboBox<String> accountSelectionComboBox;
+    private JComboBox<String> targetAccountSelectionComboBox;
 
     private JButton concurrentButton;
 
-    public BankSimulatorUI(Account account, TransactionProcessor transactionProcessor, MockAccountRepository repo) {
+    public BankSimulatorUI(List<Account> accounts, TransactionProcessor transactionProcessor, MockAccountRepository repo) {
         super("Bank Transaction Simulator (Swing)");
-        this.userAccount = account;
+        this.userAccounts = accounts;
         this.processor = transactionProcessor;
         this.repository = repo;
         this.completedTransactions = new ArrayList<>();
@@ -55,22 +62,32 @@ public class BankSimulatorUI extends JFrame implements TransactionStatusListener
         updateBalanceDisplay();
     }
 
+    private Account getSelectedAccount() {
+        if (accountSelectionComboBox.getSelectedItem() == null) return userAccounts.get(0);
+        String selectedIdentifierFull = (String) accountSelectionComboBox.getSelectedItem();
+        String selectedIdentifierPrefix = selectedIdentifierFull.split(" - ")[0];
+        return userAccounts.stream()
+                .filter(a -> a.getAccountIdentifier().toString().substring(0, 8).equals(selectedIdentifierPrefix))
+                .findFirst()
+                .orElse(userAccounts.get(0));
+    }
+
     private void initializeUIComponents() {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         Dimension initialSize = new Dimension(880, 700);
 
         setPreferredSize(initialSize);
-        setMinimumSize(new Dimension(850, 550));
+        setMinimumSize(new Dimension(850, 450));
 
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
         mainPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        JPanel statusPanel = createStatusPanel();
-        mainPanel.add(statusPanel, BorderLayout.NORTH);
+        JPanel topControlsWrapper = new JPanel(new BorderLayout());
+        topControlsWrapper.add(createStatusPanel(), BorderLayout.NORTH);
+        topControlsWrapper.add(createControlPanel(), BorderLayout.SOUTH);
 
-        JPanel controlPanel = createControlPanel();
-        mainPanel.add(controlPanel, BorderLayout.CENTER);
+        mainPanel.add(topControlsWrapper, BorderLayout.NORTH);
 
         historyTextArea = new JTextArea();
         historyTextArea.setEditable(false);
@@ -78,9 +95,8 @@ public class BankSimulatorUI extends JFrame implements TransactionStatusListener
         historyTextArea.setBackground(new Color(230, 230, 230));
 
         JScrollPane scrollPane = new JScrollPane(historyTextArea);
-        scrollPane.setPreferredSize(new Dimension(800, 450));
 
-        mainPanel.add(scrollPane, BorderLayout.SOUTH);
+        mainPanel.add(scrollPane, BorderLayout.CENTER);
 
         add(mainPanel);
 
@@ -101,6 +117,20 @@ public class BankSimulatorUI extends JFrame implements TransactionStatusListener
                 "Current Account Status"
         ));
 
+        List<String> accountLabels = userAccounts.stream()
+                .map(a -> a.getAccountIdentifier().toString().substring(0, 8) + " - Balance: " + a.getCurrentBalance().toPlainString())
+                .collect(Collectors.toList());
+
+        accountSelectionComboBox = new JComboBox<>(accountLabels.toArray(new String[0]));
+        accountSelectionComboBox.addItemListener(e -> {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                updateBalanceDisplay();
+            }
+        });
+
+        statusPanel.add(new JLabel("Active Account:"));
+        statusPanel.add(accountSelectionComboBox);
+
         balanceLabel = new JLabel();
         balanceLabel.setFont(new Font("Arial", Font.BOLD, 16));
 
@@ -116,7 +146,8 @@ public class BankSimulatorUI extends JFrame implements TransactionStatusListener
         ));
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(8, 8, 8, 8);
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.weighty = 0.0;
 
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -125,9 +156,11 @@ public class BankSimulatorUI extends JFrame implements TransactionStatusListener
         controlPanel.add(new JLabel("Transaction Type:"), gbc);
 
         actionComboBox = new JComboBox<>(TransactionActionType.values());
+        actionComboBox.addItemListener(e -> updateTargetSelectionPanel());
+
         gbc.gridx = 1;
         gbc.gridy = 0;
-        gbc.weightx = 0.4;
+        gbc.weightx = 0.3;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         controlPanel.add(actionComboBox, gbc);
 
@@ -137,10 +170,10 @@ public class BankSimulatorUI extends JFrame implements TransactionStatusListener
         gbc.fill = GridBagConstraints.NONE;
         controlPanel.add(new JLabel("Amount (0 for Freeze):"), gbc);
 
-        amountInputField = new JTextField(15);
+        amountInputField = new JTextField(10);
         gbc.gridx = 3;
         gbc.gridy = 0;
-        gbc.weightx = 1.0;
+        gbc.weightx = 0.8;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         controlPanel.add(amountInputField, gbc);
 
@@ -157,10 +190,32 @@ public class BankSimulatorUI extends JFrame implements TransactionStatusListener
 
         submitButton.addActionListener(e -> processNewTransaction(false));
 
+        List<String> targetLabels = userAccounts.stream()
+                .map(a -> a.getAccountIdentifier().toString().substring(0, 8))
+                .collect(Collectors.toList());
+
+        targetAccountSelectionComboBox = new JComboBox<>(targetLabels.toArray(new String[0]));
+
         gbc.gridx = 0;
         gbc.gridy = 1;
+        gbc.gridwidth = 2;
+        gbc.weightx = 0.0;
+        controlPanel.add(new JLabel("Target Account for Transfer:"), gbc);
+
+        gbc.gridx = 2;
+        gbc.gridy = 1;
+        gbc.gridwidth = 2;
+        gbc.weightx = 0.8;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        controlPanel.add(targetAccountSelectionComboBox, gbc);
+
+        updateTargetSelectionPanel();
+
+        gbc.gridx = 0;
+        gbc.gridy = 2;
         gbc.gridwidth = 6;
         gbc.weightx = 1.0;
+        gbc.insets = new Insets(5, 5, 5, 5);
         controlPanel.add(new JSeparator(), gbc);
 
         concurrentButton = new JButton("Concurrent Test: Run 100x Deposit/Withdrawal");
@@ -169,9 +224,10 @@ public class BankSimulatorUI extends JFrame implements TransactionStatusListener
         concurrentButton.addActionListener(e -> processNewTransaction(true));
 
         gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridy = 3;
         gbc.gridwidth = 3;
         gbc.weightx = 0.5;
+        gbc.insets = new Insets(15, 10, 15, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         controlPanel.add(concurrentButton, gbc);
 
@@ -181,7 +237,7 @@ public class BankSimulatorUI extends JFrame implements TransactionStatusListener
         visitorButton.addActionListener(e -> generateReport());
 
         gbc.gridx = 3;
-        gbc.gridy = 2;
+        gbc.gridy = 3;
         gbc.gridwidth = 3;
         gbc.weightx = 0.5;
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -190,10 +246,29 @@ public class BankSimulatorUI extends JFrame implements TransactionStatusListener
         return controlPanel;
     }
 
+    private void updateTargetSelectionPanel() {
+        boolean isTransfer = actionComboBox.getSelectedItem() == TransactionActionType.TRANSFER;
+        targetAccountSelectionComboBox.setVisible(isTransfer);
+
+        Component[] components = targetAccountSelectionComboBox.getParent().getComponents();
+        for (Component component : components) {
+            if (component instanceof JLabel && ((JLabel) component).getText().startsWith("Target Account")) {
+                component.setVisible(isTransfer);
+            }
+        }
+
+        targetAccountSelectionComboBox.getParent().revalidate();
+        targetAccountSelectionComboBox.getParent().repaint();
+    }
+
+
     private void processNewTransaction(boolean isConcurrent) {
+        Account activeAccount = getSelectedAccount();
         TransactionActionType selectedAction = (TransactionActionType) actionComboBox.getSelectedItem();
         String amountText = amountInputField.getText();
         BigDecimal transactionAmount = BigDecimal.ZERO;
+
+        String targetAccountId = null;
 
         if (selectedAction != TransactionActionType.FREEZE && !amountText.isEmpty()) {
             try {
@@ -205,9 +280,19 @@ public class BankSimulatorUI extends JFrame implements TransactionStatusListener
         }
 
         if (selectedAction == TransactionActionType.TRANSFER) {
-            Account transferPartner = repository.getTransferPartnerAccount(userAccount.getAccountIdentifier());
-            if (transferPartner == null) {
-                JOptionPane.showMessageDialog(this, "No partner account available for transfer.", "Transfer Error", JOptionPane.ERROR_MESSAGE);
+            String selectedTargetPrefix = (String) targetAccountSelectionComboBox.getSelectedItem();
+            targetAccountId = userAccounts.stream()
+                    .filter(a -> selectedTargetPrefix.startsWith(a.getAccountIdentifier().toString().substring(0, 8)))
+                    .map(a -> a.getAccountIdentifier().toString())
+                    .findFirst()
+                    .orElse(null);
+
+            if (targetAccountId == null) {
+                JOptionPane.showMessageDialog(this, "Target account not selected or invalid.", "Transfer Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            if (activeAccount.getAccountIdentifier().toString().equals(targetAccountId)) {
+                JOptionPane.showMessageDialog(this, "Cannot transfer to the same account.", "Transfer Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
         }
@@ -215,18 +300,21 @@ public class BankSimulatorUI extends JFrame implements TransactionStatusListener
         if (isConcurrent) {
             final BigDecimal concurrentAmount = new BigDecimal("1.00");
             for (int i = 0; i < 100; i++) {
-                Transaction depositTransaction = new Transaction(TransactionActionType.DEPOSIT, concurrentAmount, userAccount.getAccountIdentifier());
+                Transaction depositTransaction = new Transaction(TransactionActionType.DEPOSIT, concurrentAmount, activeAccount.getAccountIdentifier());
                 pendingTransactionCounter.incrementAndGet();
                 historyTextArea.append("\n[Concurrent D] Submitting ID " + depositTransaction.getTransactionIdentifier().toString().substring(0, 4) + "...");
                 processor.submitTransaction(depositTransaction);
 
-                Transaction withdrawalTransaction = new Transaction(TransactionActionType.WITHDRAWAL, concurrentAmount, userAccount.getAccountIdentifier());
+                Transaction withdrawalTransaction = new Transaction(TransactionActionType.WITHDRAWAL, concurrentAmount, activeAccount.getAccountIdentifier());
                 pendingTransactionCounter.incrementAndGet();
                 historyTextArea.append("\n[Concurrent W] Submitting ID " + withdrawalTransaction.getTransactionIdentifier().toString().substring(0, 4) + "...");
                 processor.submitTransaction(withdrawalTransaction);
             }
         } else {
-            Transaction newTransaction = new Transaction(selectedAction, transactionAmount, userAccount.getAccountIdentifier());
+            Transaction newTransaction = new Transaction(selectedAction, transactionAmount, activeAccount.getAccountIdentifier());
+            if (targetAccountId != null) {
+                newTransaction.setStatusMessage(targetAccountId);
+            }
             pendingTransactionCounter.incrementAndGet();
             historyTextArea.append("\n[Submitting] " + newTransaction.getActionType().name() + " Transaction ID: " + newTransaction.getTransactionIdentifier().toString().substring(0, 4) + "...");
             processor.submitTransaction(newTransaction);
@@ -263,18 +351,91 @@ public class BankSimulatorUI extends JFrame implements TransactionStatusListener
             }
             historyTextArea.append("\n[Completed - " + remaining + " left] " + statusColor + updatedTransaction.toString());
 
+            updateAccountComboBoxes(updatedTransaction);
             updateBalanceDisplay();
             historyTextArea.setCaretPosition(historyTextArea.getDocument().getLength());
         });
     }
 
-    private void updateBalanceDisplay() {
-        balanceLabel.setText(String.format("Balance: %s | ID: %s | Frozen: %s",
-                userAccount.getCurrentBalance().toPlainString(),
-                userAccount.getAccountIdentifier().toString().substring(0, 8),
-                userAccount.getIsFrozen()));
+    private void updateAccountComboBoxes(Transaction completedTransaction) {
+        String sourceAccountId = completedTransaction.getAccountIdentifier().toString();
 
-        if (userAccount.getIsFrozen()) {
+        String targetAccountId = null;
+        if (completedTransaction.getActionType() == TransactionActionType.TRANSFER && completedTransaction.getStatusMessage().startsWith("SUCCESS")) {
+            String status = completedTransaction.getStatusMessage();
+            try {
+                // Извлечение префикса цели (до '...') из: "SUCCESS: Funds transferred to 3c07a00c. Source New Balance: 956.00"
+                // Префикс - это первая часть статуса, которая идет после 'Funds transferred to ' и до '.'
+                String targetIdPrefix = status.split(" transferred to ")[1].split("\\.")[0].substring(0, 8).trim();
+
+                final String targetIdPrefixFinal = targetIdPrefix;
+
+                targetAccountId = userAccounts.stream()
+                        .filter(a -> a.getAccountIdentifier().toString().substring(0, 8).equals(targetIdPrefixFinal))
+                        .map(a -> a.getAccountIdentifier().toString())
+                        .findFirst()
+                        .orElse(null);
+
+            } catch (ArrayIndexOutOfBoundsException ignored) {}
+        }
+
+        updateSingleComboBoxLabel(accountSelectionComboBox, sourceAccountId);
+
+        if (targetAccountId != null) {
+            updateSingleComboBoxLabel(accountSelectionComboBox, targetAccountId);
+            updateSingleComboBoxLabel(targetAccountSelectionComboBox, targetAccountId);
+        }
+    }
+
+    private void updateSingleComboBoxLabel(JComboBox<String> comboBox, String accountId) {
+        final String accountIdFinal = accountId;
+
+        String accountPrefix = accountId.substring(0, 8);
+
+        Optional<Account> currentAccountOptional = userAccounts.stream()
+                .filter(a -> a.getAccountIdentifier().toString().equals(accountIdFinal))
+                .findFirst();
+
+        if (currentAccountOptional.isEmpty()) return;
+        Account account = currentAccountOptional.get();
+
+        ItemListener listener = comboBox.getItemListeners().length > 0 ? comboBox.getItemListeners()[0] : null;
+        if (listener != null) {
+            comboBox.removeItemListener(listener);
+        }
+
+        DefaultComboBoxModel<String> model = (DefaultComboBoxModel<String>) comboBox.getModel();
+
+        for (int i = 0; i < model.getSize(); i++) {
+            if (model.getElementAt(i).startsWith(accountPrefix)) {
+                String newLabel = accountPrefix + " - Balance: " + account.getCurrentBalance().toPlainString();
+                String currentSelection = (String) comboBox.getSelectedItem();
+
+                model.removeElementAt(i);
+                model.insertElementAt(newLabel, i);
+
+                if (currentSelection != null && currentSelection.startsWith(accountPrefix)) {
+                    comboBox.setSelectedIndex(i);
+                }
+                break;
+            }
+        }
+
+        if (listener != null) {
+            comboBox.addItemListener(listener);
+        }
+    }
+
+    private void updateBalanceDisplay() {
+        Account activeAccount = getSelectedAccount();
+        String currentSelectionPrefix = activeAccount.getAccountIdentifier().toString().substring(0, 8);
+
+        balanceLabel.setText(String.format("ID: %s | Balance: %s | Frozen: %s",
+                currentSelectionPrefix,
+                activeAccount.getCurrentBalance().toPlainString(),
+                activeAccount.getIsFrozen()));
+
+        if (activeAccount.getIsFrozen()) {
             balanceLabel.setForeground(new Color(255, 69, 0));
         } else {
             balanceLabel.setForeground(new Color(0, 102, 0));
@@ -286,13 +447,18 @@ public class BankSimulatorUI extends JFrame implements TransactionStatusListener
         initialAccount1.setCurrentBalance(new BigDecimal("1000.00"));
 
         Account initialAccount2 = new Account();
+        initialAccount2.setCurrentBalance(new BigDecimal("200.00"));
 
-        MockAccountRepository repository = new MockAccountRepository(Arrays.asList(initialAccount1, initialAccount2));
+        Account initialAccount3 = new Account();
+        initialAccount3.setCurrentBalance(new BigDecimal("5000.00"));
+
+        List<Account> allUserAccounts = Arrays.asList(initialAccount1, initialAccount2, initialAccount3);
+        MockAccountRepository repository = new MockAccountRepository(allUserAccounts);
         TransactionStrategyFactory factory = new TransactionStrategyFactory();
         TransactionProcessor processor = TransactionProcessor.getTransactionProcessorInstance(repository, factory);
 
         SwingUtilities.invokeLater(() -> {
-            BankSimulatorUI ui = new BankSimulatorUI(initialAccount1, processor, repository);
+            BankSimulatorUI ui = new BankSimulatorUI(allUserAccounts, processor, repository);
             ui.setVisible(true);
         });
     }
