@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎌 Аниме Колесо Веселья</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            color: #f8fafc;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+            padding: 30px;
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 25px;
+            border: 2px solid rgba(139, 92, 246, 0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Шапка */
+        .header {
+            margin-bottom: 40px;
+        }
+
+        .title {
+            font-size: 3.2rem;
+            background: linear-gradient(45deg, #fbbf24, #f472b6, #8b5cf6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 10px;
+            text-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            animation: titleGlow 3s infinite alternate;
+        }
+
+        .subtitle {
+            font-size: 1.3rem;
+            color: #cbd5e1;
+            margin-bottom: 30px;
+            font-style: italic;
+        }
+
+        /* Колесо */
+        .wheel-container {
+            position: relative;
+            width: 400px;
+            height: 400px;
+            margin: 0 auto 40px;
+        }
+
+        .wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            border: 12px solid #4c1d95;
+            box-shadow:
+                0 0 40px rgba(139, 92, 246, 0.6),
+                inset 0 0 40px rgba(255, 255, 255, 0.1);
+            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 70%);
+            transition: transform 3.5s cubic-bezier(0.2, 0.8, 0.3, 1);
+        }
+
+        .wheel.spinning {
+            transform: rotate(1260deg);
+        }
+
+        .wheel-segment {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            left: 0;
+            top: 0;
+            transform-origin: right bottom;
+            clip-path: polygon(0 0, 100% 0, 100% 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .segment-content {
+            position: absolute;
+            left: 40%;
+            top: 20%;
+            width: 80px;
+            text-align: center;
+            font-size: 28px;
+            transform-origin: center;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+        }
+
+        /* НОВАЯ СТРЕЛОЧКА - указывает вниз */
+        .wheel-pointer {
+            position: absolute;
+            top: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 30px solid transparent;
+            border-right: 30px solid transparent;
+            z-index: 100;
+            border-top: 50px solid #fbbf24;
+            border-radius: 5px 5px 0 0;
+        }
+
+        .wheel-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            border-radius: 50%;
+            border: 4px solid #fbbf24;
+            z-index: 50;
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.8);
+        }
+
+        /* Кнопка */
+        .spin-button {
+            padding: 18px 50px;
+            font-size: 1.4rem;
+            font-weight: bold;
+            background: linear-gradient(45deg, #8b5cf6, #ec4899);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 20px 0;
+            letter-spacing: 1px;
+            box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .spin-button:hover:not(:disabled) {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(139, 92, 246, 0.6);
+        }
+
+        .spin-button:active:not(:disabled) {
+            transform: translateY(-2px);
+        }
+
+        .spin-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .spin-button::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.7s;
+        }
+
+        .spin-button:hover::after {
+            left: 100%;
+        }
+
+        /* Результат */
+        .result-container {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9));
+            border-radius: 20px;
+            padding: 30px;
+            margin: 40px auto;
+            border: 2px solid #10b981;
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.2);
+            max-width: 600px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .result-title {
+            font-size: 1.8rem;
+            color: #10b981;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .task-text {
+            font-size: 1.6rem;
+            padding: 25px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            margin: 20px 0;
+            line-height: 1.5;
+            border-left: 5px solid #fbbf24;
+        }
+
+        .task-emoji {
+            font-size: 2.5rem;
+            margin-right: 15px;
+            vertical-align: middle;
+        }
+
+        .task-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-top: 25px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        .info-item {
+            text-align: left;
+        }
+
+        .info-label {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 1.2rem;
+            color: #f1f5f9;
+            font-weight: 500;
+        }
+
+        /* Загрузка */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            font-size: 1.3rem;
+            color: #8b5cf6;
+            animation: pulse 1.5s infinite;
+        }
+
+        /* Инфо */
+        .info {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(139, 92, 246, 0.1);
+            border-radius: 15px;
+            font-size: 0.9rem;
+            color: #cbd5e1;
+        }
+
+        /* Анимации */
+        @keyframes titleGlow {
+            0% {
+                text-shadow: 0 5px 15px rgba(251, 191, 36, 0.3);
+            }
+            100% {
+                text-shadow: 0 5px 25px rgba(139, 92, 246, 0.5);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.6;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes spinGlow {
+            0%, 100% {
+                box-shadow: 0 0 40px rgba(139, 92, 246, 0.6);
+            }
+            50% {
+                box-shadow: 0 0 60px rgba(236, 72, 153, 0.8);
+            }
+        }
+
+        /* Цвета сегментов - более равномерные */
+        .segment-color-1 { background: #06d6a0; }
+        .segment-color-2 { background: #3b82f6; }
+        .segment-color-3 { background: #8b5cf6; }
+        .segment-color-4 { background: #ec4899; }
+        .segment-color-5 { background: #f59e0b; }
+        .segment-color-6 { background: #ef4444; }
+        .segment-color-7 { background: #14b8a6; }
+        .segment-color-8 { background: #f97316; }
+        .segment-color-9 { background: #a855f7; }
+        .segment-color-10 { background: #eab308; }
+        .segment-color-11 { background: #22c55e; }
+        .segment-color-12 { background: #0ea5e9; }
+        .segment-color-13 { background: #f43f5e; }
+        .segment-color-14 { background: #84cc16; }
+        .segment-color-15 { background: #06b6d4; }
+        .segment-color-16 { background: #facc15; }
+        .segment-color-17 { background: #7c3aed; }
+        .segment-color-18 { background: #10b981; }
+        .segment-color-19 { background: #f472b6; }
+        .segment-color-20 { background: #fbbf24; }
+        .segment-color-21 { background: #dc2626; }
+        .segment-color-22 { background: #2563eb; }
+        .segment-color-23 { background: #059669; }
+        .segment-color-24 { background: #d97706; }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .wheel-container {
+                width: 300px;
+                height: 300px;
+            }
+
+            .title {
+                font-size: 2.5rem;
+            }
+
+            .task-text {
+                font-size: 1.3rem;
+            }
+
+            .wheel-pointer {
+                top: -25px;
+                border-left: 20px solid transparent;
+                border-right: 20px solid transparent;
+                border-top: 35px solid #fbbf24;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .wheel-container {
+                width: 250px;
+                height: 250px;
+            }
+
+            .title {
+                font-size: 2rem;
+            }
+
+            .task-info {
+                grid-template-columns: 1fr;
+            }
+
+            .wheel-pointer {
+                top: -20px;
+                border-left: 15px solid transparent;
+                border-right: 15px solid transparent;
+                border-top: 25px solid #fbbf24;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Шапка -->
+    <div class="header">
+        <h1 class="title">🎌 Аниме Колесо Веселья</h1>
+        <p class="subtitle">Крути колесо — получай смешные задания!</p>
+    </div>
+
+    <!-- Колесо -->
+    <div class="wheel-container">
+        <div class="wheel" id="wheel">
+            <!-- Сегменты будут созданы через JS -->
+        </div>
+        <div class="wheel-center"></div>
+        <div class="wheel-pointer"></div>
+    </div>
+
+    <!-- Кнопка -->
+    <button class="spin-button" id="spinBtn">
+        🎰 Покрутить колесо!
+    </button>
+
+    <div class="loading" id="loading">
+        Колесо вращается...
+    </div>
+
+    <!-- Результат -->
+    <div class="result-container" id="resultContainer">
+        <h2 class="result-title">🎯 Ваше задание:</h2>
+        <div class="task-text" id="taskText">
+            Крутите колесо, чтобы получить задание!
+        </div>
+        <div class="task-info">
+            <div class="info-item">
+                <div class="info-label">🎭 Персонаж</div>
+                <div class="info-value" id="character">-</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">📺 Жанр</div>
+                <div class="info-value" id="genre">-</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">⭐ Редкость</div>
+                <div class="info-value" id="rarity">-</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">🎯 Сложность</div>
+                <div class="info-value" id="difficulty">-</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Информация -->
+    <div class="info">
+        <p>🎌 Всего заданий: <strong id="totalTasks">24</strong> | Создано для аниме-фанатов!</p>
+    </div>
+</div>
+
+<script>
+    // База смешных аниме заданий
+    const animeTasks = [
+        {
+            text: "Съешь рамэн с криком 'Даттебаё!' 🍜",
+            emoji: "🍜",
+            character: "Наруто Узумаки",
+            genre: "Кулинария",
+            rarity: "Обычное",
+            difficulty: "🎯 Легко"
+        },
+        {
+            text: "Повтори позу ДжоДжо с максимальной драмой 🕶️",
+            emoji: "🕶️",
+            character: "Джотаро Куджо",
+            genre: "Косплей",
+            rarity: "Редкое",
+            difficulty: "⚡ Средне"
+        },
+        {
+            text: "Нарисуй чиби за 5 минут с закрытыми глазами 🎨",
+            emoji: "🎨",
+            character: "Любой художник",
+            genre: "Творчество",
+            rarity: "Веселое",
+            difficulty: "🎯 Легко"
+        },
+        {
+            text: "Спой OP из любимого аниме в стиле караоке 🎤",
+            emoji: "🎤",
+            character: "Любой",
+            genre: "Музыка",
+            rarity: "Обычное",
+            difficulty: "⚡ Средне"
+        },
+        {
+            text: "Изобрази трансформацию Сейлор Мун 🌙",
+            emoji: "🌙",
+            character: "Сейлор Мун",
+            genre: "Магические девочки",
+            rarity: "Эпичное",
+            difficulty: "🔥 Сложно"
+        },
+        {
+            text: "Сделай 10 отжиманий с криком 'Plus Ultra!' 💪",
+            emoji: "💪",
+            character: "Идзуку Мидория",
+            genre: "Спорт",
+            rarity: "Обычное",
+            difficulty: "🎯 Легко"
+        },
+        {
+            text: "Напиши хайку про своего вайфу/хасбанду ✍️",
+            emoji: "✍️",
+            character: "Поэт",
+            genre: "Творчество",
+            rarity: "Редкое",
+            difficulty: "⚡ Средне"
+        },
+        {
+            text: "Изобрази знаменитую ухмылку Лелуша 😏",
+            emoji: "😏",
+            character: "Лелуш Ламперуж",
+            genre: "Драма",
+            rarity: "Эпичное",
+            difficulty: "🔥 Сложно"
+        },
+        {
+            text: "Собери пазл с аниме артом за 15 минут 🧩",
+            emoji: "🧩",
+            character: "Гений-головоломщик",
+            genre: "Головоломка",
+            rarity: "Обычное",
+            difficulty: "⚡ Средне"
+        },
+        {
+            text: "Создай мини-стенд как в ДжоДжо ⭐",
+            emoji: "⭐",
+            character: "Станд-пользователь",
+            genre: "Творчество",
+            rarity: "Редкое",
+            difficulty: "🔥 Сложно"
+        },
+        {
+            text: "Съешь пирожок как Кира Йошикаге 🥧",
+            emoji: "🥧",
+            character: "Кира Йошикаге",
+            genre: "Кулинария",
+            rarity: "Мемное",
+            difficulty: "🎯 Легко"
+        },
+        {
+            text: "Произнеси заклинание как в Мадока Магике ✨",
+            emoji: "✨",
+            character: "Мадока Канаме",
+            genre: "Магия",
+            rarity: "Эпичное",
+            difficulty: "⚡ Средне"
+        },
+        {
+            text: "Сделай фото в стиле аниме с фильтром 📸",
+            emoji: "📸",
+            character: "Фотограф",
+            genre: "Фотография",
+            rarity: "Обычное",
+            difficulty: "🎯 Легко"
+        },
+        {
+            text: "Придумай новую технику для Наруто 🌀",
+            emoji: "🌀",
+            character: "Шиноби",
+            genre: "Творчество",
+            rarity: "Редкое",
+            difficulty: "🔥 Сложно"
+        },
+        {
+            text: "Протанцуй танец из аниме опенинга 💃",
+            emoji: "💃",
+            character: "Танцор",
+            genre: "Танцы",
+            rarity: "Веселое",
+            difficulty: "⚡ Средне"
+        },
+        {
+            text: "Создай мем с кадром из аниме 😂",
+            emoji: "😂",
+            character: "Мемодел",
+            genre: "Мемы",
+            rarity: "Мемное",
+            difficulty: "🎯 Легко"
+        },
+        {
+            text: "Изобрази битву мечами как в SAO ⚔️",
+            emoji: "⚔️",
+            character: "Кирито",
+            genre: "Экшн",
+            rarity: "Эпичное",
+            difficulty: "🔥 Сложно"
+        },
+        {
+            text: "Приготовьте что-то из Food Wars! 🍳",
+            emoji: "🍳",
+            character: "Юкихира Соума",
+            genre: "Кулинария",
+            rarity: "Редкое",
+            difficulty: "⚡ Средне"
+        },
+        {
+            text: "Напиши короткий фанфик на 100 слов 📝",
+            emoji: "📝",
+            character: "Писатель",
+            genre: "Литература",
+            rarity: "Обычное",
+            difficulty: "🎯 Легко"
+        },
+        {
+            text: "Создай косплей из подручных средств 👗",
+            emoji: "👗",
+            character: "Любой персонаж",
+            genre: "Косплей",
+            rarity: "Творческое",
+            difficulty: "🔥 Сложно"
+        },
+        {
+            text: "Произнеси речь как Лайт Ягами 📚",
+            emoji: "📚",
+            character: "Лайт Ягами",
+            genre: "Детектив",
+            rarity: "Эпичное",
+            difficulty: "⚡ Средне"
+        },
+        {
+            text: "Собери Gunpla за 30 минут 🤖",
+            emoji: "🤖",
+            character: "Гундам-пилот",
+            genre: "Хобби",
+            rarity: "Редкое",
+            difficulty: "🔥 Сложно"
+        },
+        {
+            text: "Спой колыбельную как в 'Твоему имени' 🌙",
+            emoji: "🌙",
+            character: "Мицуха",
+            genre: "Музыка",
+            rarity: "Романтичное",
+            difficulty: "🎯 Легко"
+        },
+        {
+            text: "Изобрази тренировку как у Рокуторы 🥋",
+            emoji: "🥋",
+            character: "Хаибар Рокото",
+            genre: "Спорт",
+            rarity: "Эпичное",
+            difficulty: "🔥 Сложно"
+        }
+    ];
+
+    // Инициализация при загрузке
+    document.addEventListener('DOMContentLoaded', function() {
+        const wheel = document.getElementById('wheel');
+        const spinBtn = document.getElementById('spinBtn');
+        const loading = document.getElementById('loading');
+        const resultContainer = document.getElementById('resultContainer');
+        const taskText = document.getElementById('taskText');
+        const characterEl = document.getElementById('character');
+        const genreEl = document.getElementById('genre');
+        const rarityEl = document.getElementById('rarity');
+        const difficultyEl = document.getElementById('difficulty');
+        const totalTasksEl = document.getElementById('totalTasks');
+
+        // Устанавливаем общее количество заданий
+        totalTasksEl.textContent = animeTasks.length;
+
+        // Создаем сегменты колеса с равномерным распределением
+        function createWheelSegments() {
+            wheel.innerHTML = '';
+            const totalSegments = animeTasks.length;
+            const segmentAngle = 360 / totalSegments;
+
+            animeTasks.forEach((task, index) => {
+                const segment = document.createElement('div');
+                segment.className = `wheel-segment segment-color-${(index % 24) + 1}`;
+
+                // Улучшенное позиционирование сегментов
+                const rotation = index * segmentAngle;
+                segment.style.transform = `rotate(${rotation}deg)`;
+
+                // Создаем внутренний контент
+                const content = document.createElement('div');
+                content.className = 'segment-content';
+
+                // Поворачиваем контент обратно, чтобы он был читаем
+                const contentRotation = segmentAngle / 2;
+                content.style.transform = `rotate(${contentRotation}deg)`;
+                content.textContent = task.emoji;
+
+                // Добавляем легкую границу между сегментами
+                segment.style.borderRight = '1px solid rgba(255, 255, 255, 0.1)';
+
+                segment.appendChild(content);
+                wheel.appendChild(segment);
+            });
+        }
+
+        // Получение случайного задания
+        function getRandomTask() {
+            const randomIndex = Math.floor(Math.random() * animeTasks.length);
+            return animeTasks[randomIndex];
+        }
+
+        // Обновление результатов
+        function updateResult(task) {
+            taskText.innerHTML = `<span class="task-emoji">${task.emoji}</span> ${task.text}`;
+            characterEl.textContent = task.character;
+            genreEl.textContent = task.genre;
+            rarityEl.textContent = task.rarity;
+            difficultyEl.textContent = task.difficulty;
+
+            // Меняем цвет в зависимости от сложности
+            if (task.difficulty.includes("Легко")) {
+                difficultyEl.style.color = "#10b981";
+            } else if (task.difficulty.includes("Средне")) {
+                difficultyEl.style.color = "#f59e0b";
+            } else {
+                difficultyEl.style.color = "#ef4444";
+            }
+
+            // Показываем контейнер с анимацией
+            resultContainer.style.display = 'block';
+            resultContainer.style.animation = 'fadeIn 0.5s ease';
+        }
+
+        // Обработчик кнопки
+        spinBtn.addEventListener('click', function() {
+            if (spinBtn.disabled) return;
+
+            // Блокируем кнопку
+            spinBtn.disabled = true;
+            loading.style.display = 'block';
+
+            // Запускаем анимацию вращения
+            wheel.classList.add('spinning');
+            wheel.style.animation = 'spinGlow 1s infinite alternate';
+
+            // Получаем задание
+            const task = getRandomTask();
+
+            // Ждем окончания анимации
+            setTimeout(() => {
+                // Останавливаем анимацию
+                wheel.classList.remove('spinning');
+                wheel.style.animation = 'none';
+
+                // Обновляем результаты
+                updateResult(task);
+
+                // Разблокируем кнопку
+                spinBtn.disabled = false;
+                loading.style.display = 'none';
+
+                // Добавляем эффект
+                spinBtn.textContent = "🎰 Крутить снова!";
+
+            }, 3500); // 3.5 секунды вращения
+        });
+
+        // Инициализация
+        createWheelSegments();
+
+        // Показываем первое задание при загрузке
+        const firstTask = getRandomTask();
+        updateResult(firstTask);
+    });
+</script>
+</body>
+</html>

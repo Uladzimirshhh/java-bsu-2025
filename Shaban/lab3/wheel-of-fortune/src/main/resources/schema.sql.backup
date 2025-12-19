@@ -1,0 +1,12 @@
+CREATE TABLE IF NOT EXISTS wheel_options (
+    id BIGSERIAL PRIMARY KEY,
+    text TEXT NOT NULL,
+    color VARCHAR(20),
+    icon VARCHAR(10),
+    weight INTEGER DEFAULT 1,
+    anime_character VARCHAR(100),
+    genre VARCHAR(50),
+    emoji VARCHAR(50),           -- Добавляем столбец emoji
+    secret BOOLEAN DEFAULT true,
+    completed BOOLEAN DEFAULT false
+);
